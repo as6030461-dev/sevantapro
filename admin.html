@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seventa Admin</title><meta name="robots" content="noindex">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0a1224;--ink2:#121c36;--amber:#f5a524;--bg:#f3f2ee;--line:#e3e1d9;--mute:#5b647a}
+*{box-sizing:border-box;margin:0}body{font-family:Manrope,sans-serif;background:var(--bg);color:#1a2133}
+h1,h2,h3,.logo{font-family:Sora,sans-serif}:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.login{min-height:100vh;display:grid;place-items:center;background:radial-gradient(700px 500px at 70% 30%,#1c2d57,transparent 60%),var(--ink);padding:20px}
+.box{background:#fff;border-radius:20px;padding:40px;width:100%;max-width:400px;box-shadow:0 40px 80px rgba(0,0,0,.4)}
+.logo{font-weight:800;font-size:1.4rem;margin-bottom:6px}.box p{color:var(--mute);margin-bottom:24px;font-size:.95rem}
+label{display:block;font-weight:600;font-size:.9rem;margin:14px 0 6px}
+input{width:100%;height:48px;border:1px solid var(--line);border-radius:10px;padding:0 14px;font:inherit;background:#f7f6f2}
+.btn{border:0;border-radius:10px;font:700 .92rem Sora,sans-serif;cursor:pointer;padding:0 18px;height:42px}
+.pri{background:var(--ink);color:#fff;width:100%;height:50px;margin-top:22px}.pri:hover{background:#1d2c55}
+.note{margin-top:16px;font-size:.8rem;color:var(--mute);background:#fff7e6;border-radius:8px;padding:10px 12px}
+#app{display:none;min-height:100vh}
+.side{position:fixed;inset:0 auto 0 0;width:230px;background:var(--ink);color:#c6cde0;padding:24px 16px}
+.side .logo{color:#fff;padding:0 10px 24px}.side a{display:block;padding:12px 14px;border-radius:10px;color:inherit;text-decoration:none;font-weight:600;cursor:pointer;margin-bottom:4px}
+.side a.on,.side a:hover{background:var(--ink2);color:#fff}
+main{margin-left:230px;padding:32px}
+.top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.stat{background:#fff;border-radius:16px;padding:22px;border:1px solid var(--line)}.stat b{font:800 2rem Sora,sans-serif;display:block}.stat span{color:var(--mute);font-size:.9rem}
+.tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}.tab{background:#fff;border:1px solid var(--line);color:#1a2133}.tab.on{background:var(--ink);color:#fff}
+.list{display:grid;gap:12px}.row{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 22px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;animation:in .4s ease}
+@keyframes in{from{opacity:0;transform:translateY(10px)}}
+.av{width:48px;height:48px;border-radius:14px;background:var(--ink);color:var(--amber);display:grid;place-items:center;font:800 1.1rem Sora,sans-serif}
+.info{flex:1;min-width:200px}.info small{color:var(--mute);display:block}
+.ok{background:#16a36a;color:#fff}.no{background:#fde8e8;color:#b42318}.out{background:#fff;border:1px solid var(--line)}
+.empty{text-align:center;color:var(--mute);padding:48px;background:#fff;border-radius:16px}
+@media(max-width:800px){.side{position:static;width:auto;display:flex;gap:6px;overflow:auto}.side .logo{display:none}main{margin:0;padding:20px}}
+</style></head><body>
+<div class="login" id="login"><form class="box" id="lf"><div class="logo">Seventa Admin</div><p>Sign in to review and approve workers.</p>
+<label for="e">Email</label><input id="e" type="email" required autocomplete="username">
+<label for="p">Password</label><input id="p" type="password" required autocomplete="current-password">
+<button class="btn pri" type="submit">Sign in</button>
+<div class="note" id="loginMessage" role="status">Admin Firebase account se sign in karein. Admin access sirf approved Admin UID ko milega.</div></form></div>
+
+<div id="app"><aside class="side"><div class="logo">Seventa</div>
+<a class="on" data-t="pending">Approvals</a><a data-t="approved">Approved workers</a><a data-t="blocked">Blocked</a><a id="out">Sign out</a></aside>
+<main><div class="top"><h1 id="ttl">Worker approvals</h1><input id="q" placeholder="Search name or work" style="max-width:260px" aria-label="Search"></div><div class="note" id="appMessage" role="status" style="display:none;margin:0 0 16px"></div>
+<div class="stats"><div class="stat"><b id="s1">0</b><span>Waiting for approval</span></div><div class="stat"><b id="s2">0</b><span>Approved workers</span></div><div class="stat"><b id="s3">0</b><span>Blocked</span></div></div>
+<div class="list" id="ls"></div></main></div>
+
+<script type="module">
+import { auth, collection, db, doc, getDoc, onSnapshot, query, reviewWorker, signInWithEmailAndPassword, signOut } from './firebase-client.js';
+let workers = [];
+let activeTab = 'pending';
+let stopWatching = null;
+const $ = id => document.getElementById(id);
+
+function showLoginMessage(text, isError = false) {
+  const target = $('app').style.display === 'block' ? $('appMessage') : $('loginMessage');
+  target.textContent = text;
+  target.style.display = 'block';
+  target.style.borderLeftColor = isError ? '#b42318' : 'var(--amber)';
+}
+
+$('lf').onsubmit = async event => {
+  event.preventDefault();
+  if (!auth) {
+    showLoginMessage('Firebase setup pending hai. firebase-config.js aur firebase-setup.md check karein.', true);
+    return;
+  }
+  const button = $('lf').querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const credential = await signInWithEmailAndPassword(auth, $('e').value.trim(), $('p').value);
+    const [admin, account, token] = await Promise.all([
+      getDoc(doc(db, 'admins', credential.user.uid)),
+      getDoc(doc(db, 'accounts', credential.user.uid)),
+      credential.user.getIdTokenResult(true)
+    ]);
+    const claims = token.claims;
+    const hasAdminClaim = claims.admin === true || claims.role === 'admin';
+    const hasAdminDocument = admin.exists() && admin.data().enabled === true;
+    const hasAdminAccountRole = account.exists() && account.data().role === 'admin';
+    if (!hasAdminClaim && !hasAdminDocument && !hasAdminAccountRole) {
+      await signOut(auth);
+      throw new Error('Admin access missing for UID ' + credential.user.uid + '. Set Firebase Auth claim role=admin/admin=true, accounts/' + credential.user.uid + ' role=admin, or admins/' + credential.user.uid + ' enabled=true.');
+    }
+    $('login').style.display = 'none';
+    $('app').style.display = 'block';
+    stopWatching = onSnapshot(query(collection(db, 'workers')), snapshot => {
+      workers = snapshot.docs.map(worker => ({ id: worker.id, ...worker.data() }));
+      draw();
+    }, error => showLoginMessage(error.message, true));
+    draw();
+  } catch (error) {
+    showLoginMessage(error.message || 'Admin sign in nahi ho saka.', true);
+  } finally {
+    $('p').value = '';
+    button.disabled = false;
+  }
+};
+
+$('out').onclick = async () => {
+  if (stopWatching) stopWatching();
+  await signOut(auth);
+  $('app').style.display = 'none';
+  $('login').style.display = 'grid';
+};
+
+document.querySelectorAll('[data-t]').forEach(link => {
+  link.onclick = () => {
+    activeTab = link.dataset.t;
+    document.querySelectorAll('[data-t]').forEach(item => item.classList.toggle('on', item === link));
+    $('ttl').textContent = { pending: 'Worker approvals', approved: 'Approved workers', blocked: 'Blocked workers' }[activeTab];
+    draw();
+  };
+});
+$('q').oninput = draw;
+
+async function setStatus(workerId, status) {
+  try {
+    await reviewWorker({ workerId, status });
+  } catch (error) {
+    showLoginMessage(error.message || 'Worker status update nahi ho saka.', true);
+  }
+}
+
+function escapeHTML(value) {
+  return String(value || '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[character]));
+}
+
+function draw() {
+  ['pending', 'approved', 'blocked'].forEach((status, index) => {
+    $('s' + (index + 1)).textContent = workers.filter(worker => worker.status === status).length;
+  });
+  const search = $('q').value.trim().toLowerCase();
+  const visible = workers.filter(worker => worker.status === activeTab && (worker.fullName + worker.trade + worker.city + worker.email).toLowerCase().includes(search));
+  $('ls').innerHTML = visible.map(worker => {
+    const hasCoordinates = Number.isFinite(worker.latitude) && Number.isFinite(worker.longitude);
+    const locationReview = hasCoordinates
+      ? '<small><a href="https://www.google.com/maps?q=' + worker.latitude + ',' + worker.longitude + '" target="_blank" rel="noopener">Review location: ' + worker.latitude.toFixed(6) + ', ' + worker.longitude.toFixed(6) + '</a></small>'
+      : '<small>Worker location coordinates not provided.</small>';
+    const action = activeTab === 'pending'
+      ? '<button class="btn ok" data-worker-id="' + worker.id + '" data-status="approved">Approve</button><button class="btn no" data-worker-id="' + worker.id + '" data-status="blocked">Reject</button>'
+      : activeTab === 'approved'
+        ? '<button class="btn no" data-worker-id="' + worker.id + '" data-status="blocked">Block</button>'
+        : '<button class="btn out" data-worker-id="' + worker.id + '" data-status="approved">Restore</button>';
+    return '<div class="row"><div class="av">' + escapeHTML((worker.fullName || '?').slice(0, 1)) + '</div><div class="info"><strong>' + escapeHTML(worker.fullName) + '</strong><small>' + escapeHTML(worker.trade) + ' &middot; ' + escapeHTML(worker.city) + ' &middot; ' + escapeHTML(worker.experience) + ' experience &middot; Rs. ' + escapeHTML(worker.rate) + ' / ' + escapeHTML(worker.rateUnit) + '</small><small>' + escapeHTML(worker.phone) + ' &middot; ' + escapeHTML(worker.email) + '</small>' + locationReview + '<small>' + escapeHTML(worker.details) + '</small></div>' + action + '</div>';
+  }).join('') || '<div class="empty">Nothing here right now.</div>';
+  $('ls').querySelectorAll('[data-status]').forEach(button => {
+    button.onclick = () => setStatus(button.dataset.workerId, button.dataset.status);
+  });
+}
+</script></body></html>

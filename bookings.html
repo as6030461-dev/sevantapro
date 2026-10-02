@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Manage your Seventa worker booking requests.">
+<title>My bookings | Seventa</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0a1224;--amber:#f5a524;--paper:#f7f6f2;--line:#e3e1d9;--mute:#5b647a;--green:#147448;--red:#a52828}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:var(--paper);color:#1a2133;font:400 1rem/1.55 Manrope,sans-serif}header{background:var(--ink);color:#fff}.bar{max-width:1000px;min-height:70px;margin:auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px}.logo{font:800 1.3rem Sora,sans-serif;color:#fff;text-decoration:none}.logo b{color:var(--amber)}.bar a:last-child{color:#d7dcec}main{max-width:1000px;margin:44px auto;padding:0 24px}h1,h2{font-family:Sora,sans-serif}h1{font-size:2rem;margin:0 0 8px}.intro{color:var(--mute);margin:0 0 26px}.notice{padding:14px 16px;background:#fff;border-left:3px solid var(--amber);color:var(--mute);margin-bottom:16px}.notice a{color:var(--ink);font-weight:700}.list{display:grid;gap:14px}.booking{background:#fff;border:1px solid var(--line);border-radius:8px;padding:20px}.booking header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;background:none;color:inherit}.booking h2{font-size:1.08rem;margin:0}.status{font-size:.78rem;font-weight:700;text-transform:capitalize;color:var(--green)}.status.requested{color:#8a5b00}.facts{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:14px;color:var(--mute);font-size:.9rem}.note{margin:12px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}.actions{display:flex;gap:8px;margin-top:16px}.actions button{min-height:40px;padding:0 14px;border:0;border-radius:6px;font:700 .85rem Manrope,sans-serif;cursor:pointer}.accept{background:var(--ink);color:#fff}.decline,.cancel{background:#fde8e8;color:var(--red)}button:disabled{opacity:.55;cursor:wait}.empty{background:#fff;text-align:center;padding:40px 20px;color:var(--mute);border:1px solid var(--line);border-radius:8px}.empty a{color:var(--ink);font-weight:700}.message{min-height:24px;color:var(--red);margin:12px 0}
+@media(max-width:600px){main{margin:30px auto;padding:0 16px}.bar{padding:0 16px}.booking{padding:16px}.booking header{flex-direction:column}}
+</style>
+</head>
+<body>
+<header><div class="bar"><a class="logo" href="index.html"><b>S</b> Seventa</a><a href="index.html">Back to home</a></div></header>
+<main>
+  <h1>My bookings</h1>
+  <p class="intro" id="intro">Your customer requests and worker bookings appear here.</p>
+  <div class="notice" id="notice" role="status">Loading bookings...</div>
+  <p class="message" id="message" role="status"></p>
+  <div class="list" id="bookingList"></div>
+</main>
+<script type="module">
+import { auth, collection, db, doc, getDoc, onAuthStateChanged, onSnapshot, query, serverTimestamp, signOut, updateDoc, where } from './firebase-client.js';
+
+const $ = id => document.getElementById(id);
+const escapeHTML = value => String(value || '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+let currentRole = null;
+let stopListening = null;
+
+function showMessage(text, isError = true) {
+  $('message').textContent = text;
+  $('message').style.color = isError ? '#a52828' : '#147448';
+}
+
+function render(snapshot) {
+  const bookings = snapshot.docs.map(item => ({ id: item.id, ...item.data() }));
+  bookings.sort((left, right) => String(left.scheduledDate + left.scheduledTime).localeCompare(String(right.scheduledDate + right.scheduledTime)));
+  $('notice').hidden = true;
+  if (!bookings.length) {
+    $('bookingList').innerHTML = currentRole === 'customer'
+      ? '<div class="empty">No booking requests yet. <a href="search.html">Find a worker</a>.</div>'
+      : '<div class="empty">No customer requests yet.</div>';
+    return;
+  }
+  $('bookingList').innerHTML = bookings.map(booking => {
+    const otherPerson = currentRole === 'worker' ? booking.customerName : booking.workerName;
+    const heading = currentRole === 'worker' ? 'Customer: ' : 'Worker: ';
+    const actions = booking.status === 'requested'
+      ? currentRole === 'worker'
+        ? '<div class="actions"><button class="accept" data-booking-action="accepted">Accept</button><button class="decline" data-booking-action="declined">Decline</button></div>'
+        : '<div class="actions"><button class="cancel" data-booking-action="cancelled">Cancel request</button></div>'
+      : '';
+    return `<article class="booking" data-booking-id="${escapeHTML(booking.id)}"><header><h2>${heading}${escapeHTML(otherPerson)}</h2><span class="status ${escapeHTML(booking.status)}">${escapeHTML(booking.status)}</span></header><div class="facts"><span>${escapeHTML(booking.workerTrade)}</span><span>${escapeHTML(booking.scheduledDate)} at ${escapeHTML(booking.scheduledTime)}</span></div><p class="note">${escapeHTML(booking.note)}</p>${actions}</article>`;
+  }).join('');
+}
+
+$('bookingList').addEventListener('click', async event => {
+  const button = event.target.closest('[data-booking-action]');
+  if (!button || !auth.currentUser) return;
+  button.disabled = true;
+  try {
+    await updateDoc(doc(db, 'bookings', button.closest('[data-booking-id]').dataset.bookingId), {
+      status: button.dataset.bookingAction,
+      updatedAt: serverTimestamp()
+    });
+    showMessage('Booking updated.', false);
+  } catch (error) {
+    showMessage(error.message || 'Booking update failed.');
+  } finally {
+    button.disabled = false;
+  }
+});
+
+onAuthStateChanged(auth, async user => {
+  if (stopListening) stopListening();
+  if (!user) {
+    $('notice').innerHTML = 'Please <a href="login.html?role=customer">sign in</a> to see bookings.';
+    $('bookingList').replaceChildren();
+    return;
+  }
+  try {
+    const account = await getDoc(doc(db, 'accounts', user.uid));
+    if (!account.exists() || !['customer', 'worker'].includes(account.data().role)) {
+      await signOut(auth);
+      $('notice').textContent = 'Account profile not found. Sign in with your Seventa account.';
+      return;
+    }
+    currentRole = account.data().role;
+    $('intro').textContent = currentRole === 'worker'
+      ? 'Review customer requests and accept or decline them.'
+      : 'Track your requests to approved professionals.';
+    const field = currentRole === 'worker' ? 'workerId' : 'customerId';
+    stopListening = onSnapshot(query(collection(db, 'bookings'), where(field, '==', user.uid)), render, error => {
+      $('notice').textContent = error.message || 'Bookings could not be loaded.';
+      $('notice').hidden = false;
+    });
+  } catch (error) {
+    $('notice').textContent = error.message || 'Bookings could not be loaded.';
+    $('notice').hidden = false;
+  }
+});
+</script>
+</body>
+</html>

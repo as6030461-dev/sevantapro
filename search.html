@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Search verified Seventa workers by service and location, then contact them directly.">
+<title>Find a worker | Seventa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0a1224;--ink2:#121c36;--amber:#f5a524;--paper:#f7f6f2;--text:#1a2133;--mute:#5b647a;--line:#e3e1d9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--text);font:400 1rem/1.6 Manrope,system-ui,sans-serif}
+h1,h2,h3,.logo{font-family:Sora,Manrope,sans-serif;line-height:1.15;letter-spacing:-.02em}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:3px}
+.top{background:var(--ink);color:#fff}
+.bar{max-width:1160px;margin:auto;padding:0 24px;min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:20px}
+.logo{color:#fff;text-decoration:none;font-size:1.4rem;font-weight:800}
+.logo b{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:7px;margin-right:8px;background:var(--amber);color:var(--ink)}
+.bar>a:last-child{color:#d7dcec;text-decoration:none;font-weight:600}
+.bar>a:last-child:hover{color:#fff}
+main{max-width:1160px;margin:auto;padding:56px 24px 84px}
+.intro{margin-bottom:30px}
+.eyebrow{color:#87600d;font-weight:700;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase}
+h1{font-size:clamp(2rem,5vw,3.4rem);margin:8px 0 12px;color:var(--ink)}
+.intro p{max-width:650px;color:var(--mute);margin:0}
+.search{display:grid;grid-template-columns:1fr 1fr 1.2fr auto 150px auto;gap:12px;align-items:end;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin:28px 0 30px;box-shadow:0 14px 36px rgba(10,18,36,.06)}
+label{display:block;font-size:.82rem;font-weight:700;margin:0 0 6px}
+input,select{width:100%;height:48px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:0 12px;color:var(--text);font:inherit}
+.search button,.call{height:48px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:8px;padding:0 20px;background:var(--amber);color:var(--ink);font:700 .92rem Sora,sans-serif;text-decoration:none;cursor:pointer;white-space:nowrap}
+.search button:hover,.call:hover{background:#ffc15a}
+.search .location-button{height:48px;border:1px solid var(--line);border-radius:8px;padding:0 12px;background:#fff;color:var(--ink);font:600 .84rem Manrope,sans-serif;cursor:pointer;white-space:nowrap}
+.search .location-button:hover{border-color:var(--amber)}
+.location-status{grid-column:1/-1;min-height:20px;margin:-5px 0 0;color:var(--mute);font-size:.82rem}
+.booking-button{width:100%;height:46px;margin-top:10px;border:0;border-radius:8px;background:var(--amber);color:var(--ink);font:700 .9rem Sora,sans-serif;cursor:pointer}
+.booking-button:hover{background:#ffc15a}
+.booking-dialog{width:min(520px,calc(100% - 28px));max-height:calc(100% - 28px);padding:0;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--text);box-shadow:0 24px 70px rgba(0,0,0,.35)}
+.booking-dialog::backdrop{background:rgba(4,10,24,.66)}
+.booking-form{padding:24px}
+.booking-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.booking-heading h2{font-size:1.25rem;margin:0 0 4px}
+.booking-heading p{color:var(--mute);margin:0}
+.close-booking{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:#fff;font-size:1.3rem;cursor:pointer}
+.booking-fields{display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;margin-top:14px}
+.booking-fields .full{grid-column:1/-1}
+.booking-form textarea{width:100%;min-height:100px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;font:inherit;resize:vertical}
+.booking-message{min-height:24px;color:var(--mute);font-size:.88rem;margin-top:10px}
+.booking-message a{color:var(--ink);font-weight:700}
+.summary{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 14px}
+.summary h2{margin:0;font-size:1.15rem}
+.summary span{color:var(--mute);font-size:.9rem}
+.results{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,320px),1fr));gap:16px}
+.card{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;min-width:0}
+.identity{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+.avatar{flex:0 0 48px;width:48px;height:48px;display:grid;place-items:center;border-radius:14px;background:var(--ink);color:var(--amber);font:700 1.15rem Sora,sans-serif}
+.identity h3{font-size:1.08rem;margin:0 0 3px;overflow-wrap:anywhere}
+.identity p{color:var(--mute);font-size:.9rem;margin:0}
+.verified{display:inline-flex;align-items:center;gap:5px;margin-top:6px;color:#147448;font-size:.77rem;font-weight:700}
+.verified::before{content:"✓";display:grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#e5f6ed}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.facts small{display:block;color:var(--mute);font-size:.75rem}
+.facts strong{display:block;font-size:.9rem;overflow-wrap:anywhere}
+.details{color:#454f66;font-size:.9rem;white-space:pre-line;overflow-wrap:anywhere;margin:14px 0 18px}
+.call{width:100%;margin-top:auto;background:var(--ink);color:#fff}
+.call:hover{background:#1d2c55}
+.empty{grid-column:1/-1;text-align:center;padding:44px 24px;background:#fff;border:1px solid var(--line);border-radius:14px;color:var(--mute)}
+.empty strong{display:block;color:var(--ink);font:700 1.1rem Sora,sans-serif;margin-bottom:6px}
+.notice{padding:14px 16px;border-left:3px solid var(--amber);border-radius:4px;background:#fff;color:var(--mute)}
+.notice[hidden]{display:none}
+@media(max-width:900px){.search{grid-template-columns:1fr 1fr 1.2fr}.search button,.search .location-button{width:100%}}
+@media(max-width:760px){main{padding:38px 18px 64px}.search{grid-template-columns:1fr 1fr}.search label[for="keyword"],#keyword,.location-status{grid-column:1/-1}.search button,.search .location-button{width:100%}}
+@media(max-width:480px){.bar{padding:0 18px;min-height:66px}.logo{font-size:1.2rem}.search{grid-template-columns:1fr}.search label[for="keyword"],#keyword,.location-status{grid-column:auto}.search button,.search .location-button{grid-column:auto}.summary{align-items:flex-start;flex-direction:column}.card{padding:18px}.booking-form{padding:18px}.booking-fields{grid-template-columns:1fr}.booking-fields .full{grid-column:auto}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="bar">
+    <a class="logo" href="index.html"><b>S</b>Seventa</a>
+    <a href="index.html">Back to home</a>
+  </div>
+</header>
+<main>
+  <section class="intro">
+    <div class="eyebrow">Verified local professionals</div>
+    <h1>Find the right worker</h1>
+    <p>Search approved professionals by service and area, compare approximate distance, then send a booking request or call directly.</p>
+  </section>
+  <form class="search" id="searchForm" role="search">
+    <div>
+      <label for="trade">Type of work</label>
+      <select id="trade" name="trade">
+        <option value="">All services</option>
+        <option>Electrician</option><option>Plumber</option><option>Carpenter</option>
+        <option>Painter</option><option>Mason</option><option>AC Technician</option>
+        <option>Welder</option><option>Mechanic</option><option>Mobile Repair</option>
+        <option>Home Helper</option><option>Other</option>
+      </select>
+    </div>
+    <div>
+      <label for="city">City or area</label>
+      <input id="city" name="city" type="search" placeholder="e.g. Jaipur">
+    </div>
+    <div>
+      <label for="keyword">Name or skill</label>
+      <input id="keyword" name="q" type="search" placeholder="e.g. Ravi, wiring">
+    </div>
+    <button class="location-button" id="useLocation" type="button">Use my location</button>
+    <div>
+      <label for="radius">Within (km)</label>
+      <select id="radius" disabled><option value="5">5 km</option><option value="10">10 km</option><option value="25" selected>25 km</option><option value="50">50 km</option></select>
+    </div>
+    <button type="submit">Search workers</button>
+    <p class="location-status" id="locationStatus" role="status">Nearby search uses approximate worker locations. You can also search by city.</p>
+  </form>
+  <div class="notice" id="notice" role="status" hidden></div>
+  <section aria-live="polite" aria-busy="true" id="directory">
+    <div class="summary"><h2>Available workers</h2><span id="count"></span></div>
+    <div class="results" id="results"></div>
+  </section>
+</main>
+<dialog class="booking-dialog" id="bookingDialog" aria-labelledby="bookingTitle">
+  <form class="booking-form" id="bookingForm">
+    <div class="booking-heading"><div><h2 id="bookingTitle">Book worker</h2><p id="bookingWorkerName"></p></div><button class="close-booking" id="closeBooking" type="button" aria-label="Close booking">&times;</button></div>
+    <div class="booking-fields">
+      <div><label for="bookingDate">Preferred date</label><input id="bookingDate" type="date" required></div>
+      <div><label for="bookingTime">Preferred time</label><input id="bookingTime" type="time" required></div>
+      <div class="full"><label for="bookingNote">Work request</label><textarea id="bookingNote" maxlength="500" placeholder="What work do you need done?" required></textarea></div>
+    </div>
+    <p class="booking-message" id="bookingMessage" role="status"></p>
+    <button class="call" id="submitBooking" type="submit">Send booking request</button>
+  </form>
+</dialog>
+<script type="module">
+import { addDoc, auth, collection, db, doc, getDoc, getDocs, query, serverTimestamp } from './firebase-client.js';
+
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(window.location.search);
+const tradeSelect = $('trade');
+const normalizedTrade = value => value.trim().toLocaleLowerCase();
+let workers = [];
+let searchLocation = null;
+let selectedWorker = null;
+
+function escapeHTML(value) {
+  return String(value || '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[character]));
+}
+
+function showNotice(message) {
+  $('notice').textContent = message;
+  $('notice').hidden = false;
+}
+
+function distanceKm(from, to) {
+  const radians = degrees => degrees * Math.PI / 180;
+  const latitudeDelta = radians(to.latitude - from.latitude);
+  const longitudeDelta = radians(to.longitude - from.longitude);
+  const arc = Math.sin(latitudeDelta / 2) ** 2
+    + Math.cos(radians(from.latitude)) * Math.cos(radians(to.latitude)) * Math.sin(longitudeDelta / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(arc), Math.sqrt(1 - arc));
+}
+
+function draw() {
+  const selectedTrade = normalizedTrade(tradeSelect.value);
+  const city = $('city').value.trim().toLocaleLowerCase();
+  const keyword = $('keyword').value.trim().toLocaleLowerCase();
+  const radius = Number($('radius').value);
+  const visible = workers.map(worker => ({
+    ...worker,
+    distanceKm: searchLocation && Number.isFinite(worker.latitude) && Number.isFinite(worker.longitude)
+      ? distanceKm(searchLocation, worker)
+      : null
+  })).filter(worker => {
+    const matchesTrade = !selectedTrade || normalizedTrade(worker.trade || '') === selectedTrade;
+    const matchesCity = !city || String(worker.city || '').toLocaleLowerCase().includes(city);
+    const searchable = [worker.fullName, worker.trade, worker.city, worker.experience, worker.details]
+      .join(' ').toLocaleLowerCase();
+    const matchesRadius = !searchLocation || (worker.distanceKm !== null && worker.distanceKm <= radius);
+    return matchesTrade && matchesCity && matchesRadius && (!keyword || searchable.includes(keyword));
+  });
+  if (searchLocation) visible.sort((left, right) => left.distanceKm - right.distanceKm);
+
+  $('count').textContent = `${visible.length} ${visible.length === 1 ? 'worker' : 'workers'}`;
+  $('results').innerHTML = visible.length ? visible.map(worker => {
+    const name = escapeHTML(worker.fullName || 'Seventa worker');
+    const trade = escapeHTML(worker.trade || 'Professional');
+    const cityName = escapeHTML(worker.city || 'Location not listed');
+    const experience = escapeHTML(worker.experience || 'Not listed');
+    const rate = Number(worker.rate);
+    const rateText = Number.isFinite(rate) && rate > 0
+      ? `Rs. ${escapeHTML(rate.toLocaleString('en-IN'))} / ${escapeHTML(worker.rateUnit || 'job')}`
+      : 'Contact for rate';
+    const details = escapeHTML(worker.details || 'Contact this worker to discuss your work.');
+    const phone = String(worker.phone || '').trim();
+    const telephone = phone.replace(/[^\d+]/g, '');
+    const initials = escapeHTML(name.trim().split(/\s+/).slice(0, 2).map(part => part[0]).join('').toUpperCase());
+    const distance = worker.distanceKm === null ? '' : `<div><small>Approx. distance</small><strong>${worker.distanceKm.toFixed(1)} km</strong></div>`;
+    return `<article class="card">
+      <div class="identity"><div class="avatar" aria-hidden="true">${initials}</div><div>
+        <h3>${name}</h3><p>${trade}</p><span class="verified">Verified worker</span>
+      </div></div>
+      <div class="facts">
+        <div><small>Area</small><strong>${cityName}</strong></div>
+        <div><small>Experience</small><strong>${experience}</strong></div>
+        <div><small>Rate</small><strong>${rateText}</strong></div>
+        ${distance}
+      </div>
+      <p class="details">${details}</p>
+      ${telephone ? `<a class="call" href="tel:${escapeHTML(telephone)}" aria-label="Call ${name}">Call worker</a>` : '<span class="notice">Phone number is not available.</span>'}
+      <button class="booking-button" type="button" data-book-worker="${escapeHTML(worker.id)}" data-worker-name="${name}" data-worker-trade="${trade}">Book worker</button>
+    </article>`;
+  }).join('') : '<div class="empty"><strong>No workers found</strong>Try a different service, name, or area.</div>';
+}
+
+$('searchForm').addEventListener('submit', event => {
+  event.preventDefault();
+  draw();
+});
+['trade', 'city', 'keyword'].forEach(id => $(id).addEventListener('input', draw));
+$('radius').addEventListener('change', draw);
+
+$('useLocation').addEventListener('click', () => {
+  if (searchLocation) {
+    searchLocation = null;
+    $('radius').disabled = true;
+    $('useLocation').textContent = 'Use my location';
+    $('locationStatus').textContent = 'Nearby search cleared. You can search by city.';
+    draw();
+    return;
+  }
+  if (!navigator.geolocation) {
+    $('locationStatus').textContent = 'Location is unavailable in this browser. Search by city instead.';
+    return;
+  }
+  const button = $('useLocation');
+  button.disabled = true;
+  $('locationStatus').textContent = 'Finding your location...';
+  navigator.geolocation.getCurrentPosition(position => {
+    searchLocation = { latitude: position.coords.latitude, longitude: position.coords.longitude };
+    $('radius').disabled = false;
+    button.textContent = 'Clear location';
+    button.disabled = false;
+    $('locationStatus').textContent = 'Showing approved workers within ' + $('radius').value + ' km. Worker distances are approximate.';
+    draw();
+  }, error => {
+    $('locationStatus').textContent = error.code === error.PERMISSION_DENIED
+      ? 'Location permission denied. Search by city or allow location access.'
+      : 'Could not find your location. Search by city or try again.';
+    button.disabled = false;
+  }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 });
+});
+
+$('results').addEventListener('click', event => {
+  const button = event.target.closest('[data-book-worker]');
+  if (!button) return;
+  selectedWorker = {
+    id: button.dataset.bookWorker,
+    name: button.dataset.workerName,
+    trade: button.dataset.workerTrade
+  };
+  $('bookingWorkerName').textContent = selectedWorker.name + ' · ' + selectedWorker.trade;
+  if (auth && auth.currentUser) {
+    $('bookingMessage').textContent = 'Choose a preferred time. Your request is sent to the worker for confirmation.';
+  } else {
+    $('bookingMessage').innerHTML = 'Please <a href="login.html?role=customer">sign in as a customer</a> before booking.';
+  }
+  $('bookingDialog').showModal();
+});
+
+$('closeBooking').addEventListener('click', () => $('bookingDialog').close());
+$('bookingDialog').addEventListener('click', event => {
+  if (event.target === $('bookingDialog')) $('bookingDialog').close();
+});
+
+$('bookingForm').addEventListener('submit', async event => {
+  event.preventDefault();
+  const button = $('submitBooking');
+  button.disabled = true;
+  try {
+    if (!auth || !auth.currentUser) {
+      $('bookingMessage').innerHTML = 'Please <a href="login.html?role=customer">log in as a customer</a> before booking.';
+      return;
+    }
+    const customerId = auth.currentUser.uid;
+    const account = await getDoc(doc(db, 'accounts', customerId));
+    if (!account.exists() || account.data().role !== 'customer') {
+      throw new Error('Only customer accounts can send booking requests.');
+    }
+    const scheduledFor = new Date($('bookingDate').value + 'T' + $('bookingTime').value);
+    if (!Number.isFinite(scheduledFor.getTime()) || scheduledFor.getTime() <= Date.now()) {
+      throw new Error('Choose a future date and time.');
+    }
+    const workerSnapshot = await getDoc(doc(db, 'workerDirectory', selectedWorker.id));
+    if (!workerSnapshot.exists() || workerSnapshot.data().status !== 'approved') {
+      throw new Error('This worker is no longer available for booking. Refresh the results.');
+    }
+    const customer = await getDoc(doc(db, 'customers', customerId));
+    await addDoc(collection(db, 'bookings'), {
+      customerId,
+      customerName: customer.exists() ? customer.data().fullName : auth.currentUser.email,
+      workerId: selectedWorker.id,
+      workerName: selectedWorker.name,
+      workerTrade: selectedWorker.trade,
+      scheduledDate: $('bookingDate').value,
+      scheduledTime: $('bookingTime').value,
+      note: $('bookingNote').value.trim(),
+      status: 'requested',
+      createdAt: serverTimestamp()
+    });
+    $('bookingMessage').textContent = 'Booking request sent. The worker will contact you to confirm.';
+    $('bookingForm').reset();
+  } catch (error) {
+    $('bookingMessage').textContent = error.message || 'Booking request could not be sent.';
+  } finally {
+    button.disabled = false;
+  }
+});
+
+const requestedTrade = params.get('trade') || '';
+const matchingTrade = Array.from(tradeSelect.options).find(option =>
+  normalizedTrade(option.value) === normalizedTrade(requestedTrade));
+if (matchingTrade) tradeSelect.value = matchingTrade.value;
+$('city').value = params.get('city') || '';
+$('keyword').value = params.get('q') || '';
+
+try {
+  if (!db) throw new Error('Worker search is not configured yet. Please try again later.');
+  const snapshot = await getDocs(query(collection(db, 'workerDirectory')));
+  workers = snapshot.docs
+    .map(item => ({ id: item.id, ...item.data() }))
+    .filter(worker => worker.status === 'approved')
+    .sort((left, right) => String(left.fullName || '').localeCompare(String(right.fullName || '')));
+  draw();
+  if (!workers.length) {
+    $('results').innerHTML = '<div class="empty"><strong>No workers available yet</strong>Approved professionals will appear here as they join Seventa.</div>';
+  }
+} catch (error) {
+  showNotice(error.message || 'Workers could not be loaded. Please try again later.');
+  $('results').innerHTML = '<div class="empty"><strong>Search is temporarily unavailable</strong>Please refresh the page in a little while.</div>';
+} finally {
+  $('directory').setAttribute('aria-busy', 'false');
+}
+</script>
+</body>
+</html>

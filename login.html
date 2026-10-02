@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Sign in or create a customer or worker account with Seventa.">
+<title>Login | Seventa</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#0a1224;--amber:#f5a524;--paper:#f7f6f2;--line:#e3e1d9;--mute:#5b647a}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:Manrope,sans-serif;color:#1a2133;background:var(--paper)}
+header{background:var(--ink);color:#fff;padding:18px max(24px,calc((100vw - 1100px)/2));display:flex;justify-content:space-between;align-items:center;gap:20px}
+.logo{font:800 1.35rem Sora,sans-serif;color:#fff;text-decoration:none}.logo b{color:var(--amber)}
+header a:last-child{color:#fff}
+.layout{max-width:1100px;margin:54px auto;padding:0 24px;display:grid;grid-template-columns:minmax(250px,.75fr) minmax(0,1.25fr);gap:48px;align-items:start}
+.intro{position:sticky;top:30px}.intro h1{font:700 clamp(2rem,4vw,3.4rem)/1.1 Sora,sans-serif;margin:0 0 16px}.intro p{color:var(--mute)}
+.note{padding:14px;border-left:3px solid var(--amber);background:#fff;margin-top:24px;color:var(--mute);font-size:.9rem}
+.box{background:#fff;padding:28px;border:1px solid var(--line);border-radius:8px;margin-bottom:20px}
+.box h2{font:700 1.4rem Sora,sans-serif;margin:0 0 6px}.sub{color:var(--mute);margin:0 0 18px;font-size:.93rem}
+.switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.switch button,.action-switch button{min-height:44px;border:1px solid var(--line);border-radius:7px;background:#fff;font:600 .92rem Manrope,sans-serif;cursor:pointer}
+.switch button[aria-pressed="true"],.action-switch button[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.action-switch{display:flex;gap:8px;margin-bottom:18px}.action-switch button{flex:1}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}.full{grid-column:1/-1}
+label{display:block;font-weight:600;font-size:.88rem;margin:12px 0 6px}
+input,select,textarea{width:100%;min-height:46px;padding:10px 12px;border:1px solid var(--line);border-radius:7px;background:#fff;color:#1a2133;font:inherit}
+textarea{min-height:95px;resize:vertical}
+.submit{min-height:48px;padding:0 20px;margin-top:18px;border:0;border-radius:7px;background:var(--amber);color:var(--ink);font:700 .92rem Sora,sans-serif;cursor:pointer}
+.submit:disabled{opacity:.6;cursor:wait}
+.location-button{min-height:42px;padding:0 14px;border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--ink);font:600 .88rem Manrope,sans-serif;cursor:pointer}
+.message{margin-top:14px;padding:12px;border-left:3px solid var(--amber);background:var(--paper);color:var(--mute);font-size:.9rem;min-height:24px}
+.link-button{border:0;background:none;color:var(--ink);text-decoration:underline;cursor:pointer;font:inherit;font-weight:600;margin-top:14px;padding:0}
+.hidden{display:none!important}
+@media(max-width:760px){.layout{grid-template-columns:1fr;margin:34px auto;gap:20px}.intro{position:static}.intro h1{font-size:2.2rem}.fields{grid-template-columns:1fr}.full{grid-column:auto}.box{padding:22px}}
+</style>
+</head>
+<body>
+<header><a class="logo" href="index.html"><b>S</b> Seventa</a><a href="index.html">Back to Seventa</a></header>
+<main class="layout">
+  <section class="intro">
+    <h1 id="introTitle">Find the right person for the job.</h1>
+    <p id="introText">Sign in as a customer to find trusted local professionals and contact them directly.</p>
+    <div class="note" id="introNote">Electricians, plumbers, carpenters and more.</div>
+  </section>
+  <div>
+    <section class="box">
+      <h2 id="formTitle">Customer login</h2>
+      <p class="sub" id="formSubtitle">Use your email and password to access your customer account.</p>
+      <div class="switch" role="group" aria-label="Account type">
+        <button type="button" id="customerTab" aria-pressed="true">Customer</button>
+        <button type="button" id="workerTab" aria-pressed="false">Worker</button>
+      </div>
+      <div class="action-switch" role="group" aria-label="Account action">
+        <button type="button" id="loginTab" aria-pressed="true">Log in</button>
+        <button type="button" id="signupTab" aria-pressed="false">Create account</button>
+      </div>
+      <form id="accountForm">
+        <div id="customerFields" class="hidden">
+          <div class="fields">
+            <div class="full"><label for="customerName">Full name</label><input id="customerName" autocomplete="name"></div>
+            <div><label for="customerPhone">Phone number</label><input id="customerPhone" type="tel" autocomplete="tel"></div>
+            <div><label for="customerCity">City or area</label><input id="customerCity" autocomplete="address-level2"></div>
+            <div class="full"><label for="customerAddress">Full address</label><input id="customerAddress" autocomplete="street-address"></div>
+          </div>
+        </div>
+        <div id="workerFields" class="hidden">
+          <div class="fields">
+            <div><label for="workerName">Full name</label><input id="workerName" autocomplete="name"></div>
+            <div><label for="workerPhone">Phone number</label><input id="workerPhone" type="tel" autocomplete="tel"></div>
+            <div><label for="trade">Type of work</label><select id="trade"><option value="">Select work</option><option>Electrician</option><option>Plumber</option><option>Carpenter</option><option>Painter</option><option>Mason</option><option>AC Technician</option><option>Welder</option><option>Mechanic</option><option>Mobile Repair</option><option>Home Helper</option><option>Other</option></select></div>
+            <div><label for="workerCity">City or area</label><input id="workerCity" autocomplete="address-level2"></div>
+            <div><label for="workerLatitude">Latitude</label><input id="workerLatitude" type="number" min="-90" max="90" step="any" inputmode="decimal"></div>
+            <div><label for="workerLongitude">Longitude</label><input id="workerLongitude" type="number" min="-180" max="180" step="any" inputmode="decimal"></div>
+            <div class="full"><button class="location-button" type="button" id="locateWorker">Use my current location</button><p class="message" id="locationMessage" role="status"></p></div>
+            <div><label for="experience">Experience</label><input id="experience" placeholder="e.g. 4 years"></div>
+            <div><label for="rate">Your rate (Rs.)</label><input id="rate" type="number" min="1" step="1"></div>
+            <div><label for="rateUnit">Rate per</label><select id="rateUnit"><option value="hour">hour</option><option value="day">day</option><option value="job">job</option></select></div>
+            <div class="full"><label for="details">Work details and skills</label><textarea id="details" maxlength="1000" placeholder="Describe your work, experience and service area"></textarea></div>
+          </div>
+        </div>
+        <label for="email">Email</label><input id="email" type="email" required autocomplete="email">
+        <div id="passwordFields">
+          <label for="password">Password</label><input id="password" type="password" minlength="8" required autocomplete="current-password">
+          <div id="confirmWrap" class="hidden"><label for="confirmPassword">Confirm password</label><input id="confirmPassword" type="password" minlength="8" autocomplete="new-password"></div>
+          <small id="passwordHint" class="hidden">Use 8+ characters with uppercase, lowercase, a number and a symbol.</small>
+        </div>
+        <button class="submit" id="submitButton" type="submit">Log in</button>
+      </form>
+      <button class="link-button" id="resetToggle" type="button">Forgot password?</button>
+      <form id="resetForm" class="hidden">
+        <label for="resetEmail">Account email</label><input id="resetEmail" type="email" autocomplete="email" required>
+        <button class="submit" type="submit">Send reset link</button>
+      </form>
+      <p class="message" id="message" role="status">Your password is secured by Firebase Authentication.</p>
+      <button class="link-button hidden" id="signOutButton" type="button">Sign out</button>
+    </section>
+    <section class="box hidden" id="workerStatusBox" aria-live="polite">
+      <h2>Worker application</h2><p class="sub" id="workerStatus"></p>
+    </section>
+  </div>
+</main>
+<script type="module">
+import { auth, createAccount, db, doc, getDoc, sendPasswordResetEmail, signInWithEmailAndPassword, signOut } from './firebase-client.js';
+
+const $ = id => document.getElementById(id);
+const params = new URLSearchParams(location.search);
+let role = params.get('role') === 'worker' ? 'worker' : 'customer';
+let signup = location.hash === '#signup' || location.hash === '#apply';
+const form = $('accountForm');
+const submitButton = $('submitButton');
+const message = $('message');
+const roleFields = { customer: $('customerFields'), worker: $('workerFields') };
+const requiredByRole = {
+  customer: ['customerName', 'customerPhone', 'customerCity', 'customerAddress'],
+  worker: ['workerName', 'workerPhone', 'trade', 'workerCity', 'workerLatitude', 'workerLongitude', 'experience', 'rate', 'details']
+};
+
+function showMessage(text, isError = false) {
+  message.textContent = text;
+  message.style.borderColor = isError ? '#b42318' : 'var(--amber)';
+  message.style.color = isError ? '#b42318' : '';
+}
+
+function strongPassword(value) {
+  return value.length >= 8 && value.length <= 128 && /[a-z]/.test(value) && /[A-Z]/.test(value) && /\d/.test(value) && /[^A-Za-z0-9]/.test(value);
+}
+
+function setRole(nextRole, updateUrl = true) {
+  role = nextRole;
+  $('customerTab').setAttribute('aria-pressed', String(role === 'customer'));
+  $('workerTab').setAttribute('aria-pressed', String(role === 'worker'));
+  $('introTitle').textContent = role === 'customer' ? 'Find the right person for the job.' : 'Put your skills to work.';
+  $('introText').textContent = role === 'customer'
+    ? 'Sign in as a customer to find trusted local professionals and contact them directly.'
+    : 'Apply with your work details and rates. Your profile stays hidden until the Seventa team reviews it.';
+  $('introNote').textContent = role === 'customer'
+    ? 'Electricians, plumbers, carpenters and more.'
+    : 'Create an account to apply and check your application status.';
+  $('formTitle').textContent = signup ? `Create ${role} account` : `${role === 'customer' ? 'Customer' : 'Worker'} login`;
+  $('formSubtitle').textContent = signup
+    ? role === 'customer' ? 'Create an account to contact trusted local professionals.' : 'Share your details and rates for admin review.'
+    : role === 'customer' ? 'Use your email and password to access your customer account.' : 'Sign in to check your worker application status.';
+  for (const [fieldRole, fields] of Object.entries(roleFields)) fields.classList.toggle('hidden', fieldRole !== role || !signup);
+  const activeRequiredFields = new Set(requiredByRole[role]);
+  for (const ids of Object.values(requiredByRole)) {
+    for (const id of ids) $(id).required = signup && activeRequiredFields.has(id);
+  }
+  $('password').autocomplete = signup ? 'new-password' : 'current-password';
+  $('confirmWrap').classList.toggle('hidden', !signup);
+  $('confirmPassword').required = signup;
+  $('passwordHint').classList.toggle('hidden', !signup);
+  $('loginTab').setAttribute('aria-pressed', String(!signup));
+  $('signupTab').setAttribute('aria-pressed', String(signup));
+  $('submitButton').textContent = signup ? role === 'worker' ? 'Create worker account' : 'Create account' : 'Log in';
+  $('resetToggle').classList.toggle('hidden', signup);
+  $('resetForm').classList.add('hidden');
+  $('workerStatusBox').classList.add('hidden');
+  if (updateUrl) {
+    const url = new URL(location.href);
+    url.searchParams.set('role', role);
+    url.hash = signup ? role === 'worker' ? 'apply' : 'signup' : '';
+    history.replaceState(null, '', url);
+  }
+  showMessage(signup ? 'Create a strong password with uppercase, lowercase, a number and a symbol.' : 'Enter your account email and password.');
+}
+
+function setAction(isSignup) {
+  signup = isSignup;
+  setRole(role);
+}
+
+$('customerTab').onclick = () => setRole('customer');
+$('workerTab').onclick = () => setRole('worker');
+$('loginTab').onclick = () => setAction(false);
+$('signupTab').onclick = () => setAction(true);
+$('resetToggle').onclick = () => {
+  $('resetForm').classList.toggle('hidden');
+  if (!$('resetForm').classList.contains('hidden')) $('resetEmail').value = $('email').value.trim();
+};
+
+$('locateWorker').onclick = () => {
+  if (!navigator.geolocation) {
+    $('locationMessage').textContent = 'Location detect nahi ho paayi. Latitude aur longitude manually enter karein.';
+    return;
+  }
+  const button = $('locateWorker');
+  button.disabled = true;
+  $('locationMessage').textContent = 'Finding your location...';
+  navigator.geolocation.getCurrentPosition(position => {
+    $('workerLatitude').value = position.coords.latitude.toFixed(6);
+    $('workerLongitude').value = position.coords.longitude.toFixed(6);
+    $('locationMessage').textContent = 'Location added. Check the coordinates before creating your account.';
+    button.disabled = false;
+  }, error => {
+    $('locationMessage').textContent = error.code === error.PERMISSION_DENIED
+      ? 'Location permission denied. Allow access or enter coordinates manually.'
+      : 'Location detect nahi ho paayi. Latitude aur longitude manually enter karein.';
+    button.disabled = false;
+  }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 });
+};
+
+async function finishLogin(user) {
+  try {
+    const account = await getDoc(doc(db, 'accounts', user.uid));
+    if (!account.exists() || account.data().role !== role) {
+      throw new Error(`This email is not registered as a ${role}. Choose the correct account type and try again.`);
+    }
+    const profileCollection = role === 'customer' ? 'customers' : 'workers';
+    const profile = await getDoc(doc(db, profileCollection, user.uid));
+    if (!profile.exists()) {
+      throw new Error(`${role === 'customer' ? 'Customer' : 'Worker'} profile was not found. Please contact support.`);
+    }
+    $('password').value = '';
+    form.classList.add('hidden');
+    $('resetToggle').classList.add('hidden');
+    $('resetForm').classList.add('hidden');
+    $('signOutButton').classList.remove('hidden');
+    if (role === 'customer') {
+      showMessage(`Welcome, ${profile.data().fullName}. Your customer account is verified.`);
+    } else {
+      const status = profile.data().status;
+      $('workerStatus').textContent = status
+        ? `Application status: ${status}. Your profile is ${status === 'approved' ? 'available to customers' : 'hidden from customers until approved'}.`
+        : 'Your worker application is being checked.';
+      $('workerStatusBox').classList.remove('hidden');
+      showMessage(`Welcome, ${profile.data().fullName}.`);
+    }
+    window.location.replace('index.html');
+  } catch (error) {
+    if (auth.currentUser && auth.currentUser.uid === user.uid) await signOut(auth);
+    throw error;
+  }
+}
+
+form.onsubmit = async event => {
+  event.preventDefault();
+  submitButton.disabled = true;
+  try {
+    if (!auth) throw new Error('Firebase setup is incomplete. Check firebase-config.js and firebase-setup.md.');
+    const email = $('email').value.trim().toLowerCase();
+    const password = $('password').value;
+    if (!signup) {
+      const credential = await signInWithEmailAndPassword(auth, email, password);
+      await finishLogin(credential.user);
+      return;
+    }
+    if (password !== $('confirmPassword').value) throw new Error('Passwords do not match.');
+    if (!strongPassword(password)) throw new Error('Use 8+ characters with uppercase, lowercase, a number and a symbol.');
+    let profile;
+    if (role === 'customer') {
+      profile = {
+        fullName: $('customerName').value.trim(),
+        phone: $('customerPhone').value.trim(),
+        city: $('customerCity').value.trim(),
+        address: $('customerAddress').value.trim()
+      };
+    } else {
+      const rate = Number($('rate').value);
+      if (!Number.isFinite(rate) || rate <= 0) throw new Error('Enter a valid rate greater than zero.');
+      const latitude = Number($('workerLatitude').value);
+      const longitude = Number($('workerLongitude').value);
+      if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+        throw new Error('Enter valid latitude and longitude or use your current location.');
+      }
+      profile = {
+        fullName: $('workerName').value.trim(),
+        phone: $('workerPhone').value.trim(),
+        trade: $('trade').value,
+        city: $('workerCity').value.trim(),
+        latitude,
+        longitude,
+        experience: $('experience').value.trim(),
+        rate,
+        rateUnit: $('rateUnit').value,
+        details: $('details').value.trim()
+      };
+    }
+    const user = await createAccount({ email, password, role, profile });
+    await finishLogin(user);
+  } catch (error) {
+    showMessage(error.message || 'Sign in could not be completed. Please try again.', true);
+  } finally {
+    submitButton.disabled = false;
+  }
+};
+
+$('resetForm').onsubmit = async event => {
+  event.preventDefault();
+  try {
+    if (!auth) throw new Error('Firebase setup is incomplete. Check firebase-config.js.');
+    await sendPasswordResetEmail(auth, $('resetEmail').value.trim().toLowerCase());
+    showMessage('Password reset link sent. Check your inbox and spam folder.');
+  } catch (error) {
+    showMessage(error.message || 'Password reset email could not be sent.', true);
+  }
+};
+
+$('signOutButton').onclick = async () => {
+  try {
+    await signOut(auth);
+    form.reset();
+    form.classList.remove('hidden');
+    $('signOutButton').classList.add('hidden');
+    $('workerStatusBox').classList.add('hidden');
+    setRole(role);
+  } catch (error) {
+    showMessage(error.message || 'Could not sign out. Please try again.', true);
+  }
+};
+
+setRole(role, false);
+if (!auth) showMessage('Firebase setup is incomplete. Check firebase-config.js and firebase-setup.md.', true);
+</script>
+</body>
+</html>

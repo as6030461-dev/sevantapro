@@ -1,0 +1,140 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      let adminPath = /databases/$(database)/documents/admins/$(request.auth.uid);
+      let accountPath = /databases/$(database)/documents/accounts/$(request.auth.uid);
+      return signedIn() && (
+        request.auth.token.get('admin', false) == true
+        || request.auth.token.get('role', '') == 'admin'
+        || (exists(adminPath) && get(adminPath).data.enabled == true)
+        || (exists(accountPath) && get(accountPath).data.role == 'admin')
+      );
+    }
+
+    function hasAccount(uid, role) {
+      let path = /databases/$(database)/documents/accounts/$(uid);
+      return (exists(path) && get(path).data.role == role)
+        || (existsAfter(path) && getAfter(path).data.role == role);
+    }
+
+    match /admins/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow write: if false;
+    }
+
+    match /accounts/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, update, delete: if false;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['email', 'role', 'createdAt'])
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role in ['customer', 'worker']
+        && request.resource.data.createdAt is timestamp;
+    }
+
+    match /customers/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid;
+      allow list, update, delete: if false;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && hasAccount(uid, 'customer')
+        && request.resource.data.keys().hasOnly(['fullName', 'phone', 'city', 'address', 'email', 'createdAt'])
+        && request.resource.data.keys().hasAll(['fullName', 'phone', 'city', 'address', 'email', 'createdAt'])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() <= 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() <= 30
+        && request.resource.data.city is string
+        && request.resource.data.city.size() <= 100
+        && request.resource.data.address is string
+        && request.resource.data.address.size() <= 250
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.createdAt is timestamp;
+    }
+
+    match /workers/{uid} {
+      allow get: if isAdmin() || (signedIn() && request.auth.uid == uid);
+      allow list: if isAdmin();
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && hasAccount(uid, 'worker')
+        && request.resource.data.keys().hasOnly(['fullName', 'phone', 'trade', 'city', 'latitude', 'longitude', 'experience', 'rate', 'rateUnit', 'details', 'status', 'email', 'createdAt'])
+        && request.resource.data.keys().hasAll(['fullName', 'phone', 'trade', 'city', 'latitude', 'longitude', 'experience', 'rate', 'rateUnit', 'details', 'status', 'email', 'createdAt'])
+        && request.resource.data.fullName is string
+        && request.resource.data.fullName.size() <= 100
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() <= 30
+        && request.resource.data.trade is string
+        && request.resource.data.trade.size() <= 80
+        && request.resource.data.city is string
+        && request.resource.data.city.size() <= 100
+        && request.resource.data.latitude is number
+        && request.resource.data.latitude >= -90
+        && request.resource.data.latitude <= 90
+        && request.resource.data.longitude is number
+        && request.resource.data.longitude >= -180
+        && request.resource.data.longitude <= 180
+        && request.resource.data.experience is string
+        && request.resource.data.experience.size() <= 80
+        && request.resource.data.rate is number
+        && request.resource.data.rate > 0
+        && request.resource.data.rateUnit in ['hour', 'day', 'job']
+        && request.resource.data.details is string
+        && request.resource.data.details.size() <= 1000
+        && request.resource.data.status == 'pending'
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.createdAt is timestamp;
+      allow update, delete: if false;
+    }
+
+    match /workerDirectory/{workerId} {
+      allow get, list: if true;
+      allow write: if false;
+    }
+
+    match /bookings/{bookingId} {
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['customerId', 'customerName', 'workerId', 'workerName', 'workerTrade', 'scheduledDate', 'scheduledTime', 'note', 'status', 'createdAt'])
+        && request.resource.data.keys().hasAll(['customerId', 'customerName', 'workerId', 'workerName', 'workerTrade', 'scheduledDate', 'scheduledTime', 'note', 'status', 'createdAt'])
+        && request.resource.data.customerId == request.auth.uid
+        && exists(/databases/$(database)/documents/accounts/$(request.auth.uid))
+        && get(/databases/$(database)/documents/accounts/$(request.auth.uid)).data.role == 'customer'
+        && exists(/databases/$(database)/documents/workerDirectory/$(request.resource.data.workerId))
+        && get(/databases/$(database)/documents/workerDirectory/$(request.resource.data.workerId)).data.status == 'approved'
+        && request.resource.data.customerName is string
+        && request.resource.data.customerName.size() <= 100
+        && request.resource.data.workerName is string
+        && request.resource.data.workerTrade is string
+        && request.resource.data.scheduledDate is string
+        && request.resource.data.scheduledDate.size() == 10
+        && request.resource.data.scheduledTime is string
+        && request.resource.data.scheduledTime.size() == 5
+        && request.resource.data.note is string
+        && request.resource.data.note.size() <= 500
+        && request.resource.data.status == 'requested'
+        && request.resource.data.createdAt is timestamp;
+      allow get, list: if isAdmin()
+        || (signedIn() && (resource.data.customerId == request.auth.uid || resource.data.workerId == request.auth.uid));
+      allow update: if isAdmin()
+        || (signedIn()
+          && resource.data.customerId == request.auth.uid
+          && resource.data.status == 'requested'
+          && request.resource.data.status == 'cancelled'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']))
+        || (signedIn()
+          && resource.data.workerId == request.auth.uid
+          && resource.data.status == 'requested'
+          && request.resource.data.status in ['accepted', 'declined']
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt']));
+      allow delete: if false;
+    }
+
+  }
+}

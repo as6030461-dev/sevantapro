@@ -21,6 +21,22 @@ firebase emulators:start --only auth,firestore,functions
 
 Keep that terminal running. The Emulator UI is at `http://127.0.0.1:4000`; use the existing local site at `http://127.0.0.1:8000`.
 
+### Seed demo workers
+
+With the emulators running, open another terminal in the project folder and run:
+
+```powershell
+$env:CITY = 'Jaipur'
+$env:PER_TRADE = '5'
+npm --prefix functions run seed:demo-workers
+```
+
+This creates 5 clearly labeled sample profiles for each of the 10 services (50 total) in Jaipur in the local Firestore Emulator's `workerDirectory`. Change `CITY` to one of the cities listed in `functions/seed-demo-workers.js` to seed another city; `PER_TRADE` accepts a whole number from 1 to 20. The script always connects to `127.0.0.1:8080`; it cannot write to the production Firestore database. It replaces only its own generated `demo-*` worker profiles on each run, so old demo locations or counts do not remain. Demo profiles are marked as demos in search results and cannot be called or booked.
+
+To test the Jaipur listings, open `http://127.0.0.1:8000/search.html?emulator=1&city=Jaipur`. Search for a work type or leave it on **All services** to see all 50 profiles. The city filter is applied to the selected city; location-radius search uses the sample coordinates around Jaipur.
+
+When the connected Firestore directory has no approved workers, search also shows 10 built-in Jaipur demo profiles so the page can be previewed without seeding the emulator. They are clearly labeled, are not stored in Firestore, and cannot be called or booked. Firebase configuration or connection errors remain visible and do not switch to demo data.
+
 1. In Emulator UI > Authentication, create a test Admin email/password user and copy its emulator UID.
 2. In Emulator UI > Firestore, create `admins/{UID}` with `enabled` as a Boolean `true`.
 3. Create a test `workers/demo-worker` document with fields such as `fullName`, `phone`, `email`, `trade`, `city`, `experience`, `rate`, `rateUnit`, `details`, and `status: "pending"`.
